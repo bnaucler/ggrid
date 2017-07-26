@@ -45,8 +45,7 @@ static void die(const char *err, int ret) {
 	exit(ret);
 }
 
-static SDL_Texture *selecttexture(const int x,
-	const int y, const char mobj, Tex *textures) {
+static SDL_Texture *selecttexture(const char mobj, Tex *textures) {
 
 	SDL_Texture *tex;
 
@@ -70,7 +69,7 @@ static SDL_Texture *selecttexture(const int x,
 	return tex;
 }
 
-static int iswall(Block *block, const char mobj) {
+static int iswall(const char mobj) {
 
 	if(mobj == 'x') return 1;
 	else return 0;
@@ -90,8 +89,8 @@ static Block *initblock(const char mobj, Tex *textures, const int x,
 	block->rect->w = sz;
 	block->rect->h = sz;
 
-	block->wall = iswall(block, mobj);
-	block->tex = selecttexture(x, y, mobj, textures);
+	block->wall = iswall(mobj);
+	block->tex = selecttexture(mobj, textures);
 
 	return block;
 }
@@ -148,7 +147,6 @@ static Tex *loadalltex(SDL_Renderer *rend) {
 	return textures;
 }
 
-// Process incoming events
 static int readevent(SDL_Event *event, Object *player) {
 
 	while (SDL_PollEvent(event)) {
@@ -339,10 +337,10 @@ static void chcol(Object *player, Block ***grid) {
 	// Grid collision
 	if(grid[player->yind][player->xind]->wall) {
 		if(player->mvmt->tu) player->yind++;
-		if(player->mvmt->td) player->yind--;
+		else if(player->mvmt->td) player->yind--;
 
 		if(player->mvmt->tl) player->xind++;
-		if(player->mvmt->tr) player->xind--;
+		else if(player->mvmt->tr) player->xind--;
 	}
 }
 
@@ -352,13 +350,13 @@ static void calrect(Object *obj, const int sz) {
 	obj->rect->y = obj->yind * sz;
 }
 
-static void mvplayer(Object *player) {
+static void mvobj(Object *obj) {
 
-	if(player->mvmt->tl) player->xind--;
-	if(player->mvmt->tr) player->xind++;
+	if(obj->mvmt->tl) obj->xind--;
+	if(obj->mvmt->tr) obj->xind++;
 
-	if(player->mvmt->tu) player->yind--;
-	if(player->mvmt->td) player->yind++;
+	if(obj->mvmt->tu) obj->yind--;
+	if(obj->mvmt->td) obj->yind++;
 }
 
 static void freeblock(Block *block) {
@@ -404,7 +402,7 @@ int main(void) {
 	Object *player = mkobj(rend, map, 'p', "ball.png", BLOCKSZ, BLOCKSZ);
 
 	while(!readevent(event, player)) {
-		mvplayer(player);
+		mvobj(player);
 		chcol(player, grid);
 		calrect(player, BLOCKSZ);
 		draw(rend, player, grid);
